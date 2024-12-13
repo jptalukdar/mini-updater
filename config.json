@@ -1,0 +1,11 @@
+{
+    "name": "SampleName",
+    "port": 9876,
+    "secret": "YourSecretKey",
+    "commands": [
+        {
+            "target": "example",
+            "shell": "curl https://example.com"
+        }
+    ]
+}
