@@ -1,11 +1,20 @@
 {
     "name": "SampleName",
     "port": 9876,
+    "authScheme" : "secretkey",
+    "username": "admin",
+    "password": "adminrocks",
     "secret": "YourSecretKey",
     "commands": [
         {
             "target": "example",
-            "shell": "curl https://example.com"
+            "shell": "curl https://example.com",
+            "streamOutput": true
+        },
+        {
+            "target" : "time",
+            "shell": "date",
+            "streamOutput": true
         }
     ]
 }

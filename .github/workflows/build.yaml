@@ -1,0 +1,66 @@
+name: Build and Release Go Binaries
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.22
+
+    - name: Build binaries
+      run: |
+        mkdir -p dist
+        GOOS=linux GOARCH=amd64 go build -o dist/mini-updater-linux-amd64
+        GOOS=darwin GOARCH=amd64 go build -o dist/mini-updater-darwin-amd64
+        GOOS=windows GOARCH=amd64 go build -o dist/mini-updater-windows-amd64.exe
+        # fpm -s dir -t rpm -n mini-updater -v 1.0.0 --after-install systemd/mini-updater.service -C dist mini-updater-linux-amd64
+
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.0.0
+        release_name: Release v1.0.0
+        draft: true
+        prerelease: false
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/mini-updater-linux-amd64
+        asset_name: mini-updater-linux-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/mini-updater-darwin-amd64
+        asset_name: mini-updater-darwin-amd64
+        asset_content_type: application/octet-stream
+
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: dist/mini-updater-windows-amd64.exe
+        asset_name: mini-updater-windows-amd64.exe
+        asset_content_type: application/octet-stream
