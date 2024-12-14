@@ -1,4 +1,4 @@
-name: Build and Release Go Binaries
+name: Build and Upload Binaries
 
 on:
   workflow_dispatch:
@@ -16,51 +16,36 @@ jobs:
       with:
         go-version: 1.22
 
-    - name: Build binaries
+    - name: Build
       run: |
-        mkdir -p dist
-        GOOS=linux GOARCH=amd64 go build -o dist/mini-updater-linux-amd64
-        GOOS=darwin GOARCH=amd64 go build -o dist/mini-updater-darwin-amd64
-        GOOS=windows GOARCH=amd64 go build -o dist/mini-updater-windows-amd64.exe
-        # fpm -s dir -t rpm -n mini-updater -v 1.0.0 --after-install systemd/mini-updater.service -C dist mini-updater-linux-amd64
+        go build -o myapp
 
-    - name: Create Release
-      id: create_release
-      uses: actions/create-release@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    - name: Upload binaries
+      uses: actions/upload-artifact@v3
       with:
-        tag_name: v1.0.0
-        release_name: Release v1.0.0
-        draft: true
-        prerelease: false
+        name: myapp-binaries
+        path: myapp
+        - name: Set up Go
+          uses: actions/setup-go@v3
+          with:
+            go-version: 1.22
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/mini-updater-linux-amd64
-        asset_name: mini-updater-linux-amd64
-        asset_content_type: application/octet-stream
+        - name: Build for Linux
+          run: |
+            GOOS=linux GOARCH=amd64 go build -o mini-updater-linux-amd64
+            GOOS=linux GOARCH=arm64 go build -o mini-updater-linux-arm64
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/mini-updater-darwin-amd64
-        asset_name: mini-updater-darwin-amd64
-        asset_content_type: application/octet-stream
+        - name: Build for Windows
+          run: |
+            GOOS=windows GOARCH=amd64 go build -o mini-updater-windows-amd64.exe
+            GOOS=windows GOARCH=arm64 go build -o mini-updater-windows-arm64.exe
 
-    - name: Upload Release Asset
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: dist/mini-updater-windows-amd64.exe
-        asset_name: mini-updater-windows-amd64.exe
-        asset_content_type: application/octet-stream
+        - name: Upload binaries
+          uses: actions/upload-artifact@v3
+          with:
+            name: mini-updater-binaries
+            path: |
+              mini-updater-linux-amd64
+              mini-updater-linux-arm64
+              mini-updater-windows-amd64.exe
+              mini-updater-windows-arm64.exe
